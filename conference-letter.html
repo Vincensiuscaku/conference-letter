@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Conference Financial Results</title>
+<style>
+:root{--bg:#e6edf5;--body:#27476f;--pocket:#325887;--flap:#3b6599;--flapIn:#1f3a5c;--paper:#fcfdff;--ink:#1b2430;--muted:#5d6b7d;--rule:#d5dde8;--seal:#e0a92e;--sealInk:#5a3d00;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1621;--body:#1d3558;--pocket:#274470;--flap:#2f5388;--flapIn:#142640;--paper:#eef3f9;--ink:#16202c;--muted:#566578;--rule:#cdd6e2;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1621;--body:#1d3558;--pocket:#274470;--flap:#2f5388;--flapIn:#142640;--paper:#eef3f9;--ink:#16202c;--muted:#566578;--rule:#cdd6e2;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);font-family:"Source Serif 4",Georgia,"Times New Roman",serif;color:var(--ink);display:flex;justify-content:center;padding:20px 12px 40px}
+.wrap{width:min(94vw,540px);container-type:inline-size}
+.stage{isolation:isolate;padding-top:0;transition:padding-top .9s cubic-bezier(.2,.8,.2,1)}
+.env{position:relative;height:66cqw;perspective:1200px;cursor:pointer;outline:none}
+.env:focus-visible{outline:3px solid var(--seal);outline-offset:8px;border-radius:6px}
+.body{position:absolute;inset:0;z-index:0;background:var(--body);border-radius:6px;box-shadow:0 14px 30px rgba(10,25,50,.28)}
+/* paper: bottom stays tucked inside the envelope, text rises above it */
+.paper{position:absolute;left:5%;right:5%;bottom:25cqw;z-index:2;display:grid;grid-template-rows:0fr;overflow:hidden;border-radius:4px 4px 0 0;transition:grid-template-rows 1s cubic-bezier(.2,.8,.2,1)}
+.env.out .paper{grid-template-rows:1fr}
+.letter{min-height:0;align-self:end;background:var(--paper);color:var(--ink);padding:5cqw 5.5cqw 44cqw;font-size:max(13px,3.2cqw);line-height:1.6}
+.letter p{margin:0 0 .85em}
+.letter .subject{font-size:1.1em;font-weight:700;padding-bottom:.6em;border-bottom:1px solid var(--rule)}
+.letter .ask{padding-left:1em;border-left:3px solid var(--seal)}
+.letter .ask>span{display:block}
+.letter .sign{margin:0;color:var(--muted)}
+.letter.typing .w{opacity:0;transition:opacity .12s}
+.letter.typing .w.on{opacity:1}
+.pocket{position:absolute;inset:0;z-index:3;background:var(--pocket);clip-path:polygon(0 0,50% 58%,100% 0,100% 100%,0 100%);border-radius:6px;pointer-events:none}
+.flap{position:absolute;left:0;top:0;width:100%;height:58%;z-index:4;background:var(--flap);clip-path:polygon(0 0,100% 0,50% 100%);transform-origin:top center;transition:transform .7s ease,z-index 0s .35s;pointer-events:none}
+.env.open .flap{transform:rotateX(180deg);z-index:1;background:var(--flapIn)}
+.seal{position:absolute;left:50%;top:50%;width:13cqw;height:13cqw;margin:-6.5cqw 0 0 -6.5cqw;border-radius:50%;background:var(--seal);color:var(--sealInk);display:grid;place-items:center;font:700 4.4cqw/1 Georgia,serif;z-index:5;box-shadow:0 3px 8px rgba(0,0,0,.3);transition:opacity .3s,transform .4s;pointer-events:none}
+.env.open .seal{opacity:0;transform:scale(.4)}
+.hint{margin:22px 0 0;text-align:center;color:var(--muted);font:500 15px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01s!important;transition-delay:0s!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="stage" id="stage">
+    <div class="env" id="env" role="button" tabindex="0" aria-expanded="false" aria-label="Open the letter from Summit Events">
+      <div class="body"></div>
+      <div class="paper"><article class="letter" id="letter" aria-label="Letter">
+        <p class="subject">Subject: Conference Financial Results</p>
+        <p>Dear Finance Team,</p>
+        <p>Our business conference is over. We expected revenue of Rp45 million and expenses of Rp38.5 million.</p>
+        <p>The actual revenue was Rp45 million, but our actual expenses reached Rp41.4 million.</p>
+        <p>We need to understand the financial results.</p>
+        <p class="ask"><span>Did the company make a profit?</span><span>Did we stay within our expense budget?</span></p>
+        <p>Please review the financial information, explain what happened, and recommend one action to improve our next event.</p>
+        <p>You will present your report to the management team.</p>
+        <p>Thank you,</p>
+        <p class="sign">Operations Manager<br>Summit Events</p>
+      </article></div>
+      <div class="pocket"></div>
+      <div class="flap"></div>
+      <div class="seal" aria-hidden="true"></div>
+    </div>
+  </div>
+  <p class="hint">Tap the envelope to open it</p>
+</div>
+<script>
+(function(){
+  var stage=document.getElementById('stage'),env=document.getElementById('env'),L=document.getElementById('letter');
+  var words=[],ctx=null,started=false;
+  (function wrap(node){
+    Array.prototype.slice.call(node.childNodes).forEach(function(n){
+      if(n.nodeType===3){
+        var f=document.createDocumentFragment();
+        n.textContent.split(/(\s+)/).forEach(function(p){
+          if(!p)return;
+          if(/^\s+$/.test(p)){f.appendChild(document.createTextNode(p));return}
+          var sp=document.createElement('span');sp.className='w';sp.textContent=p;words.push(sp);f.appendChild(sp);
+        });
+        n.parentNode.replaceChild(f,n);
+      }else if(n.nodeType===1){wrap(n)}
+    });
+  })(L);
+  L.classList.add('typing');
+  function ac(){
+    try{
+      if(!ctx){var A=window.AudioContext||window.webkitAudioContext;if(A)ctx=new A()}
+      if(ctx&&ctx.state==='suspended')ctx.resume();
+    }catch(e){ctx=null}
+    return ctx;
+  }
+  function rustle(dur,vol,freq){
+    var a=ac();if(!a)return;
+    var n=Math.floor(a.sampleRate*dur),b=a.createBuffer(1,n,a.sampleRate),d=b.getChannelData(0);
+    for(var i=0;i<n;i++)d[i]=Math.random()*2-1;
+    var src=a.createBufferSource();src.buffer=b;
+    var f=a.createBiquadFilter();f.type='bandpass';f.frequency.value=freq;f.Q.value=0.6;
+    var g=a.createGain(),curve=new Float32Array(24);
+    for(var k=0;k<24;k++)curve[k]=vol*(0.25+Math.random()*0.75)*Math.sin(Math.PI*(k+1)/25);
+    g.gain.setValueCurveAtTime(curve,a.currentTime,dur);
+    src.connect(f);f.connect(g);g.connect(a.destination);src.start();
+  }
+  function thump(){
+    var a=ac();if(!a)return;
+    var o=a.createOscillator(),g=a.createGain(),t=a.currentTime;
+    o.type='triangle';o.frequency.setValueAtTime(220,t);o.frequency.exponentialRampToValueAtTime(70,t+0.12);
+    g.gain.setValueAtTime(0.3,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.16);
+    o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+0.18);
+    rustle(0.12,0.25,1800);
+  }
+  function chime(){
+    var a=ac();if(!a)return;
+    [880,1320].forEach(function(fr,i){
+      var o=a.createOscillator(),g=a.createGain(),t=a.currentTime+i*0.11;
+      o.type='sine';o.frequency.value=fr;
+      g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.1,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+0.7);
+      o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+0.75);
+    });
+  }
+  function pad(){
+    var H=L.offsetHeight,E=env.offsetHeight,overlap=E*41/66;
+    stage.style.paddingTop=(Math.max(H-overlap-E*0.02,E*0.58)+10)+'px';
+  }
+  var timers=[],isOpen=false,hint=document.querySelector('.hint');
+  function later(fn,ms){timers.push(setTimeout(fn,ms))}
+  function clearAll(){timers.forEach(clearTimeout);timers=[]}
+  function typeOut(){
+    var i=0;
+    (function next(){
+      if(i>=words.length){chime();return}
+      words[i++].classList.add('on');
+      later(next,38);
+    })();
+  }
+  function open(){
+    clearAll();isOpen=true;
+    env.classList.add('open');env.setAttribute('aria-expanded','true');
+    hint.textContent='Tap the envelope to close it';
+    thump();
+    later(function(){pad();env.classList.add('out');rustle(0.9,0.5,3200)},650);
+    later(typeOut,1500);
+  }
+  function close(){
+    clearAll();isOpen=false;
+    words.forEach(function(w){w.classList.remove('on')});
+    env.classList.remove('out');stage.style.paddingTop='0px';
+    env.setAttribute('aria-expanded','false');
+    hint.textContent='Tap the envelope to open it';
+    rustle(0.6,0.4,3000);
+    later(function(){env.classList.remove('open');thump()},850);
+  }
+  function toggle(){if(isOpen)close();else open()}
+  env.addEventListener('click',toggle);
+  env.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle()}});
+  window.addEventListener('resize',function(){if(isOpen&&env.classList.contains('out'))pad()});
+})();
+</script>
+</body>
+</html>
